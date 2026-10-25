@@ -158,7 +158,6 @@ class _EntrySheetState extends State<EntrySheet> {
       ...subjects,
       if (current != null && current.archived) current,
     ];
-    final tasks = _subjectId == null ? <TaskItem>[] : state.tasksOf(_subjectId!);
     final minutes = int.tryParse(_minutesCtrl.text.trim()) ?? 0;
 
     return Container(
@@ -228,8 +227,6 @@ class _EntrySheetState extends State<EntrySheet> {
                       onTap: () {
                         setState(() {
                           _subjectId = s.id;
-                          final t = state.taskById(_taskId);
-                          if (t != null && t.subjectId != s.id) _taskId = null;
                         });
                       },
                       child: Container(
@@ -273,24 +270,6 @@ class _EntrySheetState extends State<EntrySheet> {
                     ),
                 ],
               ),
-            const SizedBox(height: 14),
-            _label('任务（可选）'),
-            DropdownButtonFormField<int?>(
-              initialValue: _taskId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              ),
-              items: [
-                const DropdownMenuItem<int?>(value: null, child: Text('不指定任务', style: TextStyle(fontSize: 13))),
-                for (final t in tasks)
-                  DropdownMenuItem<int?>(
-                    value: t.id,
-                    child: Text(t.name, style: const TextStyle(fontSize: 13)),
-                  ),
-              ],
-              onChanged: (v) => setState(() => _taskId = v),
-            ),
             const SizedBox(height: 14),
             _label('时长'),
             Row(
@@ -468,7 +447,6 @@ class _TimerStartSheetState extends State<TimerStartSheet> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final subjects = state.activeSubjects;
-    final tasks = _subjectId == null ? <TaskItem>[] : state.tasksOf(_subjectId!);
 
     return Container(
       decoration: BoxDecoration(
@@ -505,8 +483,6 @@ class _TimerStartSheetState extends State<TimerStartSheet> {
                 GestureDetector(
                   onTap: () => setState(() {
                     _subjectId = s.id;
-                    final t = state.taskById(_taskId);
-                    if (t != null && t.subjectId != s.id) _taskId = null;
                   }),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
@@ -542,21 +518,6 @@ class _TimerStartSheetState extends State<TimerStartSheet> {
                   ),
                 ),
             ],
-          ),
-          const SizedBox(height: 14),
-          Text('任务（可选）', style: TextStyle(fontSize: 12, color: subColor(context))),
-          const SizedBox(height: 7),
-          DropdownButtonFormField<int?>(
-            initialValue: _taskId,
-            isExpanded: true,
-            items: [
-              const DropdownMenuItem<int?>(
-                  value: null, child: Text('不指定任务', style: TextStyle(fontSize: 13))),
-              for (final t in tasks)
-                DropdownMenuItem<int?>(
-                    value: t.id, child: Text(t.name, style: TextStyle(fontSize: 13))),
-            ],
-            onChanged: (v) => setState(() => _taskId = v),
           ),
           const SizedBox(height: 14),
           Text('备注（可选）', style: TextStyle(fontSize: 12, color: subColor(context))),

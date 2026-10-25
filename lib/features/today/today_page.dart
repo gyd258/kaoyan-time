@@ -165,13 +165,30 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
             visualDensity: VisualDensity.compact,
           ),
           Expanded(
-            child: Center(
-              child: Text(
-                fmtDayCn(state.selectedDay),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: textColor(context),
+            child: GestureDetector(
+              onTap: () async {
+                final today = studyDayOf(DateTime.now());
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: state.selectedDay.isAfter(today)
+                      ? today
+                      : state.selectedDay,
+                  firstDate: DateTime(2020),
+                  lastDate: today,
+                  helpText: '选择学习日',
+                );
+                if (picked != null) {
+                  state.selectDay(dateOnly(picked));
+                }
+              },
+              child: Center(
+                child: Text(
+                  fmtDayCn(state.selectedDay),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textColor(context),
+                  ),
                 ),
               ),
             ),
