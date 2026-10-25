@@ -156,23 +156,26 @@ class _SummaryPageState extends State<SummaryPage> {
                             for (final s in subjects.take(5))
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: Row(
-                                  children: [
-                                    Dot(Color(s.color), size: 7),
-                                    const SizedBox(width: 7),
-                                    Expanded(
-                                      child: Text(s.name,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                child: GestureDetector(
+                                  onTap: () => _showSubjectDetail(state, s),
+                                  child: Row(
+                                    children: [
+                                      Dot(Color(s.color), size: 7),
+                                      const SizedBox(width: 7),
+                                      Expanded(
+                                        child: Text(s.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontSize: 12, color: textColor(context))),
+                                      ),
+                                      Text(fmtShort(s.minutes),
                                           style: TextStyle(
-                                              fontSize: 12, color: textColor(context))),
-                                    ),
-                                    Text(fmtShort(s.minutes),
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: textColor(context))),
-                                  ],
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: textColor(context))),
+                                    ],
+                                  ),
                                 ),
                               ),
                           ],
@@ -293,36 +296,184 @@ class _SummaryPageState extends State<SummaryPage> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      e.value == 0 ? '' : '${e.value}',
-                      style: TextStyle(fontSize: 8, color: subColor(context)),
-                    ),
-                    const SizedBox(height: 3),
-                    Container(
-                      height: 4 + 74 * (e.value / maxValue),
-                      decoration: BoxDecoration(
-                        color: e.key == todayKey
-                            ? Theme.of(context).colorScheme.primary
-                            : (isDark(context)
-                                ? const Color(0xFF2C3A33)
-                                : const Color(0xFFDDF0E5)),
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                child: GestureDetector(
+                  onTap: () => _showDayDetail(state, e.key),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        e.value == 0 ? '' : '${e.value}',
+                        style: TextStyle(fontSize: 8, color: subColor(context)),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      e.key == todayKey ? '今天' : fmtMd(parseDay(e.key)),
-                      style: TextStyle(fontSize: 9, color: subColor(context)),
-                    ),
-                  ],
+                      const SizedBox(height: 3),
+                      Container(
+                        height: 4 + 74 * (e.value / maxValue),
+                        decoration: BoxDecoration(
+                          color: e.key == todayKey
+                              ? Theme.of(context).colorScheme.primary
+                              : (isDark(context)
+                                  ? const Color(0xFF2C3A33)
+                                  : const Color(0xFFDDF0E5)),
+                          borderRadius:
+                              const BorderRadius.vertical(top: Radius.circular(6)),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        e.key == todayKey ? '今天' : fmtMd(parseDay(e.key)),
+                        style: TextStyle(fontSize: 9, color: subColor(context)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showDayDetail(AppState state, String dayKey) async {
+    final map = await state.subjectMinutesOfDay(dayKey);
+    final entries = map.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final total = entries.fold<int>(0, (a, e) => a + e.value);
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(fmtDayCn(parseDay(dayKey)),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        content: SizedBox(
+          width: 260,
+          child: entries.isEmpty
+              ? Text('当天没有记录', style: TextStyle(fontSize: 13, color: subColor(ctx)))
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final e in entries)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(
+                          children: [
+                            Dot(Color(state.subjectById(e.key)?.color ?? 0xFF23B574),
+                                size: 8),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                state.subjectById(e.key)?.name ?? '未知科目',
+                                style: TextStyle(fontSize: 13, color: textColor(ctx)),
+                              ),
+                            ),
+                            Text(fmtDuration(e.value),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: textColor(ctx))),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    Divider(height: 1, color: lineColor(ctx)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('合计',
+                              style:
+                                  TextStyle(fontSize: 12, color: subColor(ctx))),
+                        ),
+                        Text(fmtDuration(total),
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: textColor(ctx))),
+                      ],
+                    ),
+                  ],
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('关闭', style: TextStyle(color: subColor(ctx))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showSubjectDetail(AppState state, SubjectSummary s) async {
+    final pct = state.summaryTotal == 0
+        ? 0
+        : (s.minutes * 100 / state.summaryTotal).round();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Dot(Color(s.color), size: 9),
+            const SizedBox(width: 8),
+            Text(s.name,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        content: SizedBox(
+          width: 240,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _detailRow(ctx, '本范围时长', fmtDuration(s.minutes)),
+              const SizedBox(height: 8),
+              _detailRow(ctx, '占比', '$pct%'),
+              const SizedBox(height: 8),
+              _detailRow(
+                  ctx,
+                  '目标',
+                  s.targetMinutes > 0
+                      ? '${fmtDuration(s.targetMinutes)}（${fmtDuration(s.totalMinutes)}）'
+                      : '未设置'),
+              if (s.targetMinutes > 0) ...[
+                const SizedBox(height: 10),
+                ProgressBar(
+                  value: s.targetMinutes > 0
+                      ? s.totalMinutes / s.targetMinutes
+                      : 0,
+                  color: Color(s.color),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  s.totalMinutes >= s.targetMinutes
+                      ? '已达成目标'
+                      : '还差 ${fmtDuration(s.targetMinutes - s.totalMinutes)}',
+                  style: TextStyle(fontSize: 11, color: subColor(ctx)),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('关闭', style: TextStyle(color: subColor(ctx))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(BuildContext ctx, String label, String value) {
+    return Row(
+      children: [
+        Text(label, style: TextStyle(fontSize: 12, color: subColor(ctx))),
+        const Spacer(),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w600, color: textColor(ctx))),
+      ],
     );
   }
 

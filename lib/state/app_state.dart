@@ -81,6 +81,11 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
+  /// 某一天各科目学习分钟数（subjectId -> minutes）
+  Future<Map<int, int>> subjectMinutesOfDay(String dayKey) async {
+    return db.minutesBySubject(from: dayKey, to: dayKey);
+  }
+
   int? get examDaysLeft {
     final raw = examDate;
     if (raw == null) return null;
