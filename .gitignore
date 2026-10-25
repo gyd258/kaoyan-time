@@ -51,3 +51,6 @@ app.*.map.json
 .toolchain/
 .scaffold/
 .screenshots/
+
+# APK builds
+*.apk
