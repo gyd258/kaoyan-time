@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>研时 · 界面预览</title>
+<style>
+  :root{
+    --green:#23B574;
+    --green-ink:#0F8A55;
+    --mint:#E9F7F0;
+    --mint-2:#F2FAF6;
+    --bg:#F3F7F4;
+    --card:#FFFFFF;
+    --text:#17251D;
+    --sub:#8A9A91;
+    --line:#EDF2EE;
+    --orange:#FF8A4C;
+    --red:#FF5F6D;
+    --shadow:0 10px 30px rgba(23,37,29,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    background:#E9EEEA;color:var(--text);padding:32px 24px 64px;
+  }
+  .page-head{max-width:1400px;margin:0 auto 28px;}
+  .page-head h1{font-size:22px;letter-spacing:.5px;}
+  .page-head p{font-size:13px;color:#6F8077;margin-top:6px;}
+  .palette{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap;}
+  .sw{display:flex;align-items:center;gap:6px;font-size:12px;color:#6F8077;background:#fff;
+      padding:6px 10px;border-radius:20px;}
+  .sw i{width:14px;height:14px;border-radius:5px;display:block;}
+  .frames{max-width:1400px;margin:0 auto;display:grid;gap:28px;
+          grid-template-columns:repeat(auto-fit,minmax(320px,1fr));justify-items:center;}
+  .frame{width:100%;max-width:360px;}
+  .caption{text-align:center;font-size:13px;color:#5E7068;margin-top:12px;font-weight:500;}
+  .phone{
+    width:100%;height:720px;background:var(--bg);border-radius:34px;overflow:hidden;
+    position:relative;box-shadow:var(--shadow);border:1px solid #fff;display:flex;flex-direction:column;
+  }
+  .statusbar{height:34px;display:flex;justify-content:space-between;align-items:center;
+             padding:0 22px;font-size:12px;font-weight:600;color:var(--text);flex:none;}
+  .sb-right{display:flex;gap:4px;align-items:flex-end;}
+  .sb-right span{display:block;width:3px;background:var(--text);border-radius:1px;}
+  .sb-right span:nth-child(1){height:5px;}
+  .sb-right span:nth-child(2){height:8px;}
+  .sb-right span:nth-child(3){height:11px;width:14px;border-radius:3px;background:var(--green);}
+  .body{flex:1;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;}
+  .scroll{flex:1;overflow:hidden;}
+  /* ---------- 通用 ---------- */
+  .card{background:var(--card);border-radius:18px;padding:16px;box-shadow:0 2px 10px rgba(23,37,29,.04);}
+  .row{display:flex;align-items:center;}
+  .between{justify-content:space-between;}
+  .sub{color:var(--sub);font-size:12px;}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .pill{background:var(--mint);color:var(--green-ink);font-size:12px;padding:7px 12px;border-radius:14px;}
+  .big{font-size:32px;font-weight:700;letter-spacing:-.5px;}
+  .big small{font-size:14px;font-weight:500;color:var(--sub);margin-left:4px;}
+  .progress{height:6px;background:#EFF4F0;border-radius:3px;overflow:hidden;}
+  .progress i{display:block;height:100%;border-radius:3px;background:var(--green);}
+  .fab{position:absolute;right:18px;bottom:86px;width:52px;height:52px;border-radius:50%;
+       background:var(--green);color:#fff;font-size:26px;display:flex;align-items:center;
+       justify-content:center;box-shadow:0 8px 18px rgba(35,181,116,.35);font-weight:300;}
+  /* ---------- 底部 Tab ---------- */
+  .tabbar{flex:none;height:64px;background:#fff;border-top:1px solid var(--line);
+          display:grid;grid-template-columns:repeat(4,1fr);align-items:center;}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;color:#A6B5AD;font-size:10px;}
+  .tab.on{color:var(--green);}
+  .tab svg{width:21px;height:21px;}
+  /* ---------- 今日 ---------- */
+  .head{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 12px;}
+  .date{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;}
+  .arrow{color:#B7C4BC;font-size:16px;font-weight:400;}
+  .count{background:linear-gradient(135deg,#DFF5E9,#EAF9F1);border:1px solid #D5F0E2;
+         border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;
+         align-items:center;font-size:12px;color:var(--green-ink);margin-bottom:12px;}
+  .total{text-align:center;padding:6px 0 14px;}
+  .total .sub{margin-top:4px;}
+  .subj{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:9px;}
+  .subj .name{font-size:14px;font-weight:600;}
+  .subj .val{font-size:13px;font-weight:600;color:var(--text);}
+  .subj-main{flex:1;min-width:0;}
+  .subj-main .progress{margin-top:8px;}
+  .subj-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-top:5px;}
+  .sec-title{font-size:12px;color:var(--sub);margin:14px 2px 8px;}
+  .entry{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .entry:last-child{border-bottom:none;}
+  .entry .time{font-size:11px;color:var(--sub);width:38px;flex:none;padding-top:2px;}
+  .entry .info{flex:1;min-width:0;}
+  .entry .t1{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;}
+  .entry .t2{font-size:11px;color:var(--sub);margin-top:3px;overflow:hidden;white-space:nowrap;
+             text-overflow:ellipsis;}
+  .entry .mins{font-size:13px;font-weight:600;}
+  .tag{font-size:9px;padding:1px 5px;border-radius:4px;background:#F1F5F2;color:#8A9A91;font-weight:400;}
+  .timerbar{position:absolute;left:12px;right:12px;bottom:72px;background:var(--text);
+            color:#fff;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;
+            box-shadow:0 10px 24px rgba(23,37,29,.28);}
+  .timerbar .label{font-size:11px;color:#B9C8BF;}
+  .timerbar .num{font-size:19px;font-weight:600;letter-spacing:.5px;}
+  .tbtn{font-size:11px;padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.14);}
+  .tbtn.red{background:var(--red);}
+  /* ---------- 计时中 ---------- */
+  .timer-page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+              gap:6px;position:relative;}
+  .ring{position:relative;width:250px;height:250px;}
+  .ring svg{transform:rotate(-90deg);}
+  .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+                justify-content:center;gap:6px;}
+  .ring-center .clock{font-size:40px;font-weight:700;letter-spacing:1px;}
+  .ring-center .name{font-size:13px;color:var(--sub);}
+  .timer-actions{display:flex;gap:14px;margin-top:26px;}
+  .btn{flex:1;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+       font-size:15px;font-weight:600;}
+  .btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line);}
+  .btn.solid{background:var(--green);color:#fff;}
+  .hint{font-size:11px;color:#A0AFA7;margin-top:14px;}
+  /* ---------- 录入面板 ---------- */
+  .dim{position:absolute;inset:0;background:rgba(23,37,29,.34);}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;
+         padding:16px 18px 20px;}
+  .grip{width:36px;height:4px;border-radius:2px;background:#E4EAE6;margin:0 auto 14px;}
+  .sheet h3{font-size:15px;margin-bottom:14px;}
+  .label{font-size:12px;color:var(--sub);margin:12px 0 7px;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{padding:7px 13px;border-radius:12px;font-size:12px;background:#F5F8F6;color:#5E7068;
+        display:flex;align-items:center;gap:5px;}
+  .chip.on{background:var(--mint);color:var(--green-ink);font-weight:600;
+           box-shadow:inset 0 0 0 1px #CFEEDF;}
+  .field{background:#F7FAF8;border:1px solid var(--line);border-radius:12px;padding:11px 12px;
+         font-size:13px;color:#A6B5AD;display:flex;justify-content:space-between;align-items:center;}
+  .mins-input{display:flex;align-items:center;gap:10px;}
+  .mins-input .box{width:88px;height:44px;border-radius:12px;background:#F7FAF8;
+                   border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+                   font-size:19px;font-weight:700;}
+  .qbtn{flex:1;height:36px;border-radius:11px;background:#F2F7F4;color:var(--green-ink);
+        font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:600;}
+  .save{margin-top:18px;height:48px;border-radius:14px;background:var(--green);color:#fff;
+        display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;
+        box-shadow:0 8px 18px rgba(35,181,116,.28);}
+  /* ---------- 汇总 ---------- */
+  .seg{display:flex;background:#EAF0EC;border-radius:12px;padding:3px;margin:4px 0 14px;}
+  .seg div{flex:1;text-align:center;font-size:12px;padding:7px 0;border-radius:9px;color:#7C8D84;}
+  .seg div.on{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 4px rgba(23,37,29,.08);}
+  .stat{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;}
+  .stat .k{font-size:11px;color:var(--sub);}
+  .stat .v{font-size:15px;font-weight:600;margin-top:3px;}
+  .bars{display:flex;align-items:flex-end;gap:9px;height:104px;margin:6px 0 8px;}
+  .barcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%;}
+  .bar{width:100%;background:#DDF0E5;border-radius:6px 6px 4px 4px;}
+  .bar.on{background:var(--green);}
+  .barlab{font-size:9px;color:#A6B5AD;}
+  .donut-wrap{display:flex;align-items:center;gap:16px;margin-top:6px;}
+  .legend{flex:1;display:flex;flex-direction:column;gap:8px;}
+  .legend .li{display:flex;align-items:center;gap:7px;font-size:12px;}
+  .legend .li b{margin-left:auto;font-weight:600;}
+  /* ---------- 笔记 ---------- */
+  .search{display:flex;align-items:center;gap:8px;background:#fff;border-radius:13px;padding:10px 12px;
+          font-size:12px;color:#A6B5AD;margin-bottom:10px;}
+  .filters{display:flex;gap:7px;margin-bottom:12px;overflow:hidden;}
+  .filters .chip{font-size:11px;padding:6px 11px;}
+  .dayhead{display:flex;align-items:center;justify-content:space-between;margin:12px 2px 7px;}
+  .dayhead .d{font-size:12px;font-weight:600;}
+  .dayhead .n{font-size:10px;color:var(--sub);}
+  .note{padding:12px 13px;border-radius:14px;background:#fff;margin-bottom:8px;
+        box-shadow:0 2px 8px rgba(23,37,29,.04);}
+  .note .top{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sub);margin-bottom:6px;}
+  .note .txt{font-size:12.5px;line-height:1.6;color:#2A3A31;}
+  /* ---------- 设置 ---------- */
+  .group{margin-bottom:14px;}
+  .group .gt{font-size:11px;color:var(--sub);margin:0 4px 6px;}
+  .list{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(23,37,29,.04);}
+  .item{display:flex;align-items:center;gap:10px;padding:14px 15px;border-bottom:1px solid var(--line);
+        font-size:13px;}
+  .item:last-child{border-bottom:none;}
+  .item .ico{width:26px;height:26px;border-radius:9px;background:var(--mint);color:var(--green-ink);
+             display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+  .item .val{margin-left:auto;font-size:12px;color:var(--sub);}
+  .item .chev{color:#C7D3CC;font-size:12px;margin-left:4px;}
+  .item .danger{color:var(--red);}
+  .note-bottom{font-size:10px;color:#A6B5AD;text-align:center;margin-top:16px;}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <h1>研时 · 界面预览</h1>
+  <p>配色参考番茄ToDo（绿白 + 大圆角卡片），静态稿，确认后落地到 Flutter。</p>
+  <div class="palette">
+    <span class="sw"><i style="background:#23B574"></i>主色 #23B574</span>
+    <span class="sw"><i style="background:#E9F7F0"></i>浅绿 #E9F7F0</span>
+    <span class="sw"><i style="background:#F3F7F4"></i>背景 #F3F7F4</span>
+    <span class="sw"><i style="background:#17251D"></i>文字 #17251D</span>
+    <span class="sw"><i style="background:#FF8A4C"></i>提醒 #FF8A4C</span>
+    <span class="sw"><i style="background:#FF5F6D"></i>危险 #FF5F6D</span>
+  </div>
+</header>
+
+<main class="frames">
+
+  <!-- ========== 今日 ========== -->
+  <section class="frame">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><div class="sb-right"><span></span><span></span><span></span></div></div>
+      <div class="body">
+        <div class="scroll">
+          <div class="head">
+            <div class="date"><span class="arrow">‹</span>10月25日 周六<span class="arrow">›</span></div>
+            <div class="sub">今天</div>
+          </div>
+          <div class="count"><span>距 2026 考研还有</span><b>55 天</b></div>
+          <div class="total">
+            <div class="big">3<small>小时</small> 25<small>分</small></div>
+            <div class="sub">共 4 条记录</div>
+          </div>
+
+          <div class="subj card">
+            <div class="subj-main">
+              <div class="row between"><span class="name"><span class="dot" style="background:#5B6CFF;display:inline-block;margin-right:6px"></span>数学</span><span class="val">1 小时 30 分</span></div>
+              <div class="progress"><i style="width:25%;background:#5B6CFF"></i></div>
+              <div class="subj-meta"><span>本周 4 小时 10 分</span><span>目标 60 小时 · 25%</span></div>
+            </div>
+          </div>
+          <div class="subj card">
+            <div class="subj-main">
+              <div class="row between"><span class="name"><span class="dot" style="background:#22B07D;display:inline-block;margin-right:6px"></span>英语</span><span class="val">55 分</span></div>
+              <div class="progress"><i style="width:18%;background:#22B07D"></i></div>
+              <div class="subj-meta"><span>本周 2 小时 30 分</span><span>目标 50 小时 · 18%</span></div>
+            </div>
+          </div>
+          <div class="subj card">
+            <div class="subj-main">
+              <div class="row between"><span class="name"><span class="dot" style="background:#F2994A;display:inline-block;margin-right:6px"></span>政治</span><span class="val">40 分</span></div>
+              <div class="progress"><i style="width:12%;background:#F2994A"></i></div>
+              <div class="subj-meta"><span>本周 1 小时 50 分</span><span>目标 40 小时 · 12%</span></div>
+            </div>
+          </div>
+          <div class="subj card">
+            <div class="subj-main">
+              <div class="row between"><span class="name"><span class="dot" style="background:#9B51E0;display:inline-block;margin-right:6px"></span>专业课</span><span class="val">20 分</span></div>
+              <div class="progress"><i style="width:8%;background:#9B51E0"></i></div>
+              <div class="subj-meta"><span>本周 1 小时 10 分</span><span>目标 80 小时 · 8%</span></div>
+            </div>
+          </div>
+
+          <div class="sec-title">今日记录</div>
+          <div class="card" style="padding:4px 14px">
+            <div class="entry">
+              <div class="time">08:40</div>
+              <div class="info"><div class="t1">数学 · 张宇1000题</div><div class="t2">第 3 章做完，错题标了 6 道</div></div>
+              <div><div class="mins">90 分</div><div class="sub" style="text-align:right;margin-top:3px">手动</div></div>
+            </div>
+            <div class="entry">
+              <div class="time">14:10</div>
+              <div class="info"><div class="t1">英语 · 真题阅读 <span class="tag">计时</span></div><div class="t2">2015 年 Text 2</div></div>
+              <div><div class="mins">55 分</div></div>
+            </div>
+            <div class="entry">
+              <div class="time">16:30</div>
+              <div class="info"><div class="t1">政治 · 徐涛强化课</div><div class="t2">马原 第 4 节</div></div>
+              <div><div class="mins">40 分</div></div>
+            </div>
+            <div class="entry">
+              <div class="time">20:00</div>
+              <div class="info"><div class="t1">专业课 · 笔记整理</div><div class="t2"></div></div>
+              <div><div class="mins">20 分</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fab">+</div>
+        <div class="timerbar">
+          <div style="flex:1">
+            <div class="label">计时中 · 数学 · 张宇1000题</div>
+            <div class="num">00:23:18</div>
+          </div>
+          <div class="tbtn">暂停</div>
+          <div class="tbtn red">结束</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>今日</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V11M10 19V5M15 19v-6M20 19v-9"/></svg>汇总</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/></svg>笔记</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M5 16h14"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/></svg>设置</div>
+      </div>
+    </div>
+    <p class="caption">今日</p>
+  </section>
+
+  <!-- ========== 计时中 ========== -->
+  <section class="frame">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><div class="sb-right"><span></span><span></span><span></span></div></div>
+      <div class="body">
+        <div class="head">
+          <div class="date"><span class="arrow">‹</span>专注中<span class="arrow">›</span></div>
+          <div class="sub">数学</div>
+        </div>
+        <div class="timer-page">
+          <div class="ring">
+            <svg width="250" height="250" viewBox="0 0 250 250">
+              <circle cx="125" cy="125" r="108" fill="none" stroke="#E6F2EA" stroke-width="10"/>
+              <circle cx="125" cy="125" r="108" fill="none" stroke="#23B574" stroke-width="10"
+                      stroke-linecap="round" stroke-dasharray="678" stroke-dashoffset="169"/>
+            </svg>
+            <div class="ring-center">
+              <div class="clock">01:23:45</div>
+              <div class="name">张宇1000题 · 第3章</div>
+            </div>
+          </div>
+          <div class="timer-actions" style="width:100%;padding:0 4px">
+            <div class="btn ghost">暂停</div>
+            <div class="btn solid">结束并保存</div>
+          </div>
+          <div class="hint">锁屏或切到别的应用也会继续计时</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>今日</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V11M10 19V5M15 19v-6M20 19v-9"/></svg>汇总</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/></svg>笔记</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M5 16h14"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/></svg>设置</div>
+      </div>
+    </div>
+    <p class="caption">计时中</p>
+  </section>
+
+  <!-- ========== 录入面板 ========== -->
+  <section class="frame">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><div class="sb-right"><span></span><span></span><span></span></div></div>
+      <div class="body">
+        <div class="scroll">
+          <div class="head">
+            <div class="date"><span class="arrow">‹</span>10月25日 周六<span class="arrow">›</span></div>
+            <div class="sub">今天</div>
+          </div>
+          <div class="count"><span>距 2026 考研还有</span><b>55 天</b></div>
+          <div class="total">
+            <div class="big">3<small>小时</small> 25<small>分</small></div>
+            <div class="sub">共 4 条记录</div>
+          </div>
+          <div class="subj card">
+            <div class="subj-main">
+              <div class="row between"><span class="name"><span class="dot" style="background:#5B6CFF;display:inline-block;margin-right:6px"></span>数学</span><span class="val">1 小时 30 分</span></div>
+              <div class="progress"><i style="width:25%;background:#5B6CFF"></i></div>
+              <div class="subj-meta"><span>本周 4 小时 10 分</span><span>目标 60 小时 · 25%</span></div>
+            </div>
+          </div>
+          <div class="subj card">
+            <div class="subj-main">
+              <div class="row between"><span class="name"><span class="dot" style="background:#22B07D;display:inline-block;margin-right:6px"></span>英语</span><span class="val">55 分</span></div>
+              <div class="progress"><i style="width:18%;background:#22B07D"></i></div>
+              <div class="subj-meta"><span>本周 2 小时 30 分</span><span>目标 50 小时 · 18%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grip"></div>
+        <h3>记录学习时间</h3>
+        <div class="label">科目</div>
+        <div class="chips">
+          <div class="chip on"><span class="dot" style="background:#5B6CFF"></span>数学</div>
+          <div class="chip"><span class="dot" style="background:#22B07D"></span>英语</div>
+          <div class="chip"><span class="dot" style="background:#F2994A"></span>政治</div>
+          <div class="chip"><span class="dot" style="background:#9B51E0"></span>专业课</div>
+        </div>
+        <div class="label">任务（可选）</div>
+        <div class="field"><span style="color:#2A3A31">张宇1000题</span><span>⌄</span></div>
+        <div class="label">时长</div>
+        <div class="mins-input">
+          <div class="box">45</div>
+          <div class="qbtn">+15</div>
+          <div class="qbtn">+30</div>
+          <div class="qbtn">+60</div>
+        </div>
+        <div class="label">日期</div>
+        <div class="field"><span style="color:#2A3A31">今天 · 10月25日 周六</span><span>›</span></div>
+        <div class="label">备注（可选）</div>
+        <div class="field"><span>做了第 3 章，错题 6 道</span></div>
+        <div class="save">保存</div>
+      </div>
+    </div>
+    <p class="caption">录入面板</p>
+  </section>
+
+  <!-- ========== 汇总 ========== -->
+  <section class="frame">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><div class="sb-right"><span></span><span></span><span></span></div></div>
+      <div class="body">
+        <div class="scroll">
+          <div class="head"><div class="date" style="font-size:18px">汇总</div><div class="sub">10/19 - 10/25</div></div>
+          <div class="seg"><div>今日</div><div class="on">本周</div><div>本月</div><div>全程</div></div>
+
+          <div class="card">
+            <div class="stat">
+              <div><div class="k">本周总计</div><div class="big" style="font-size:26px">12<small>小时</small> 40<small>分</small></div></div>
+              <div style="text-align:right"><div class="k">日均</div><div class="v">1 小时 48 分</div></div>
+            </div>
+            <div class="bars">
+              <div class="barcol"><div class="bar" style="height:58%"></div><div class="barlab">10/19</div></div>
+              <div class="barcol"><div class="bar" style="height:83%"></div><div class="barlab">10/20</div></div>
+              <div class="barcol"><div class="bar" style="height:50%"></div><div class="barlab">10/21</div></div>
+              <div class="barcol"><div class="bar" style="height:67%"></div><div class="barlab">10/22</div></div>
+              <div class="barcol"><div class="bar" style="height:8%"></div><div class="barlab">10/23</div></div>
+              <div class="barcol"><div class="bar" style="height:100%"></div><div class="barlab">10/24</div></div>
+              <div class="barcol"><div class="bar on" style="height:57%"></div><div class="barlab">今天</div></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:10px">
+            <div class="sub" style="margin-bottom:2px">科目占比</div>
+            <div class="donut-wrap">
+              <svg width="118" height="118" viewBox="0 0 118 118">
+                <circle cx="59" cy="59" r="46" fill="none" stroke="#EFF4F0" stroke-width="14"/>
+                <g transform="rotate(-90 59 59)">
+                  <circle cx="59" cy="59" r="46" fill="none" stroke="#5B6CFF" stroke-width="14"
+                          stroke-dasharray="115.6 289" stroke-dashoffset="0"/>
+                  <circle cx="59" cy="59" r="46" fill="none" stroke="#22B07D" stroke-width="14"
+                          stroke-dasharray="80.9 289" stroke-dashoffset="-115.6"/>
+                  <circle cx="59" cy="59" r="46" fill="none" stroke="#F2994A" stroke-width="14"
+                          stroke-dasharray="57.8 289" stroke-dashoffset="-196.5"/>
+                  <circle cx="59" cy="59" r="46" fill="none" stroke="#9B51E0" stroke-width="14"
+                          stroke-dasharray="34.7 289" stroke-dashoffset="-254.3"/>
+                </g>
+                <text x="59" y="55" text-anchor="middle" font-size="10" fill="#8A9A91">总计</text>
+                <text x="59" y="72" text-anchor="middle" font-size="13" font-weight="600" fill="#17251D">12h40m</text>
+              </svg>
+              <div class="legend">
+                <div class="li"><span class="dot" style="background:#5B6CFF"></span>数学<b>5h05m</b></div>
+                <div class="li"><span class="dot" style="background:#22B07D"></span>英语<b>3h33m</b></div>
+                <div class="li"><span class="dot" style="background:#F2994A"></span>政治<b>2h32m</b></div>
+                <div class="li"><span class="dot" style="background:#9B51E0"></span>专业课<b>1h30m</b></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sec-title">按科目</div>
+          <div class="card" style="padding:6px 14px">
+            <div class="entry">
+              <div class="info"><div class="t1"><span class="dot" style="background:#5B6CFF"></span>数学</div>
+                <div class="progress" style="margin-top:7px"><i style="width:25%;background:#5B6CFF"></i></div></div>
+              <div style="text-align:right"><div class="mins">5h05m</div><div class="sub" style="margin-top:2px">40%</div></div>
+            </div>
+            <div class="entry">
+              <div class="info"><div class="t1"><span class="dot" style="background:#22B07D"></span>英语</div>
+                <div class="progress" style="margin-top:7px"><i style="width:18%;background:#22B07D"></i></div></div>
+              <div style="text-align:right"><div class="mins">3h33m</div><div class="sub" style="margin-top:2px">28%</div></div>
+            </div>
+            <div class="entry">
+              <div class="info"><div class="t1"><span class="dot" style="background:#F2994A"></span>政治</div>
+                <div class="progress" style="margin-top:7px"><i style="width:12%;background:#F2994A"></i></div></div>
+              <div style="text-align:right"><div class="mins">2h32m</div><div class="sub" style="margin-top:2px">20%</div></div>
+            </div>
+            <div class="entry" style="border-bottom:none">
+              <div class="info"><div class="t1"><span class="dot" style="background:#9B51E0"></span>专业课</div>
+                <div class="progress" style="margin-top:7px"><i style="width:8%;background:#9B51E0"></i></div></div>
+              <div style="text-align:right"><div class="mins">1h30m</div><div class="sub" style="margin-top:2px">12%</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>今日</div>
+        <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V11M10 19V5M15 19v-6M20 19v-9"/></svg>汇总</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/></svg>笔记</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M5 16h14"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/></svg>设置</div>
+      </div>
+    </div>
+    <p class="caption">汇总</p>
+  </section>
+
+  <!-- ========== 笔记 ========== -->
+  <section class="frame">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><div class="sb-right"><span></span><span></span><span></span></div></div>
+      <div class="body">
+        <div class="scroll">
+          <div class="head"><div class="date" style="font-size:18px">笔记</div><div class="pill">＋ 写一条</div></div>
+          <div class="search"><span>⌕</span><span>搜索关键词，如“长难句”</span></div>
+          <div class="filters">
+            <div class="chip on">全部</div>
+            <div class="chip"><span class="dot" style="background:#5B6CFF"></span>数学</div>
+            <div class="chip"><span class="dot" style="background:#22B07D"></span>英语</div>
+            <div class="chip"><span class="dot" style="background:#F2994A"></span>政治</div>
+          </div>
+
+          <div class="dayhead"><span class="d">10月25日 周六</span><span class="n">3 条</span></div>
+          <div class="note">
+            <div class="top"><span class="dot" style="background:#5B6CFF"></span>数学<span style="margin-left:auto">08:40</span></div>
+            <div class="txt">今天先做题再看讲义效率更高，错题要当天回看，不然第二天全忘。</div>
+          </div>
+          <div class="note">
+            <div class="top"><span class="dot" style="background:#22B07D"></span>英语<span style="margin-left:auto">14:10</span></div>
+            <div class="txt">阅读错在长难句，拆句子比背单词更有效，明天继续按句子练。</div>
+          </div>
+          <div class="note">
+            <div class="top"><span class="dot" style="background:#F2994A"></span>政治<span style="margin-left:auto">16:30</span></div>
+            <div class="txt">马原用框架图整理比抄书快，抄书太浪费时间。</div>
+          </div>
+
+          <div class="dayhead"><span class="d">10月24日 周五</span><span class="n">2 条</span></div>
+          <div class="note">
+            <div class="top"><span class="dot" style="background:#9B51E0"></span>专业课<span style="margin-left:auto">20:00</span></div>
+            <div class="txt">背诵放到早上，晚上注意力明显差，先做题再复盘。</div>
+          </div>
+          <div class="note">
+            <div class="top"><span class="dot" style="background:#5B6CFF"></span>数学<span style="margin-left:auto">10:20</span></div>
+            <div class="txt">同一类题连做三遍比换着做效果好，别急着刷数量。</div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>今日</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V11M10 19V5M15 19v-6M20 19v-9"/></svg>汇总</div>
+        <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/></svg>笔记</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M5 16h14"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/></svg>设置</div>
+      </div>
+    </div>
+    <p class="caption">笔记</p>
+  </section>
+
+  <!-- ========== 设置 ========== -->
+  <section class="frame">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><div class="sb-right"><span></span><span></span><span></span></div></div>
+      <div class="body">
+        <div class="scroll">
+          <div class="head"><div class="date" style="font-size:18px">设置</div><div class="sub">1.0.0</div></div>
+
+          <div class="group">
+            <div class="gt">备考</div>
+            <div class="list">
+              <div class="item"><div class="ico">考</div>考试日期<span class="val">2026-12-19</span><span class="chev">›</span></div>
+              <div class="item"><div class="ico">余</div>剩余天数<span class="val">55 天</span></div>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="gt">科目与任务</div>
+            <div class="list">
+              <div class="item"><div class="ico">科</div>科目管理<span class="val">4 个科目</span><span class="chev">›</span></div>
+              <div class="item"><div class="ico">任</div>任务管理<span class="val">7 个任务</span><span class="chev">›</span></div>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="gt">数据</div>
+            <div class="list">
+              <div class="item"><div class="ico">表</div>导出 CSV（Excel 可开）<span class="chev">›</span></div>
+              <div class="item"><div class="ico">备</div>导出 JSON 备份<span class="chev">›</span></div>
+              <div class="item"><div class="ico">入</div>导入 JSON 备份<span class="chev">›</span></div>
+              <div class="item"><div class="ico">清</div><span class="danger">清空全部数据</span><span class="chev">›</span></div>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="gt">外观</div>
+            <div class="list">
+              <div class="item"><div class="ico">色</div>主题<span class="val">跟随系统</span></div>
+            </div>
+          </div>
+
+          <div class="note-bottom">数据仅保存在本机，清理应用数据前请先导出备份</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>今日</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V11M10 19V5M15 19v-6M20 19v-9"/></svg>汇总</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/></svg>笔记</div>
+        <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M5 16h14"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/></svg>设置</div>
+      </div>
+    </div>
+    <p class="caption">设置</p>
+  </section>
+
+</main>
+</body>
+</html>

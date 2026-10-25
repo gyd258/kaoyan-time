@@ -1,0 +1,13 @@
+gradle-wrapper.jar
+/.gradle
+/captures/
+/gradlew
+/gradlew.bat
+/local.properties
+GeneratedPluginRegistrant.java
+.cxx/
+
+# 私有仓库刻意提交签名文件，保证升级覆盖安装不丢数据
+# key.properties
+# **/*.keystore
+# **/*.jks
