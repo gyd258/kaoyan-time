@@ -37,6 +37,9 @@ class AppState extends ChangeNotifier {
   int summaryDays = 1;
   Map<String, int> last7 = {};
   Map<String, int> monthHeatmap = {};
+  int? prevRangeTotal; // 上一周期（上周/上月）总时长
+  String? bestDayKey; // 本期最佳学习日
+  int bestDayMinutes = 0;
 
   int? noteFilterSubjectId;
   String noteQuery = '';
@@ -246,6 +249,44 @@ class AppState extends ChangeNotifier {
     final mEndDay = DateTime(today.year, today.month + 1, 0).day;
     final mEnd = DateTime(today.year, today.month, mEndDay);
     monthHeatmap = await db.minutesByDay(from: dayKey(mStart), to: dayKey(mEnd));
+    // 周报/月报：上一周期对比 + 本期最佳学习日
+    prevRangeTotal = null;
+    bestDayKey = null;
+    bestDayMinutes = 0;
+    if (range == SummaryRange.week || range == SummaryRange.month) {
+      final DateTime curStart;
+      final DateTime curEnd;
+      final DateTime prevStart;
+      final DateTime prevEnd;
+      if (range == SummaryRange.week) {
+        curStart = weekStart(today);
+        curEnd = today;
+        prevStart = curStart.subtract(const Duration(days: 7));
+        prevEnd = curStart.subtract(const Duration(days: 1));
+      } else {
+        curStart = DateTime(today.year, today.month, 1);
+        curEnd = today;
+        prevStart = DateTime(today.year, today.month - 1, 1);
+        prevEnd = DateTime(today.year, today.month, 0);
+      }
+      final prevMap = await db.minutesByDay(
+          from: dayKey(prevStart), to: dayKey(prevEnd));
+      prevRangeTotal = prevMap.values.fold<int>(0, (a, b) => a + b);
+      final curMap = await db.minutesByDay(
+          from: dayKey(curStart), to: dayKey(curEnd));
+      String? bestKey;
+      var bestVal = 0;
+      curMap.forEach((k, v) {
+        if (v > bestVal) {
+          bestVal = v;
+          bestKey = k;
+        }
+      });
+      if (bestKey != null) {
+        bestDayKey = bestKey;
+        bestDayMinutes = bestVal;
+      }
+    }
     notifyListeners();
   }
 
