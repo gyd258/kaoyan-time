@@ -18,6 +18,8 @@ DateTime parseDay(String s) {
 
 String fmtDayCn(DateTime d) => '${d.month}月${d.day}日 ${_cnWeek[d.weekday - 1]}';
 
+String fmtWeekday(DateTime d) => _cnWeek[d.weekday - 1];
+
 String fmtMd(DateTime d) => '${d.month}月${d.day}日';
 
 String fmtClock(DateTime t) =>

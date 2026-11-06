@@ -358,7 +358,7 @@ class _SummaryPageState extends State<SummaryPage> {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        e.key == todayKey ? '今天' : fmtMd(parseDay(e.key)),
+                        e.key == todayKey ? '今天' : fmtWeekday(parseDay(e.key)),
                         style: TextStyle(fontSize: 9, color: subColor(context)),
                       ),
                     ],
@@ -553,10 +553,10 @@ class _SummaryPageState extends State<SummaryPage> {
           ),
           alignment: Alignment.center,
           child: Text(
-            '$d',
+            minutes > 0 ? '$minutes' : '',
             style: TextStyle(
-              fontSize: 10,
-              color: minutes > 0 ? Colors.white.withValues(alpha: 0.9) : subColor(context),
+              fontSize: 8,
+              color: minutes > 0 ? Colors.white : subColor(context),
               fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
             ),
           ),
