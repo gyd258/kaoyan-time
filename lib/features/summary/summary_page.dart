@@ -108,18 +108,20 @@ class _SummaryPageState extends State<SummaryPage> {
                         ),
                     ],
                   ),
+                  if (state.range == SummaryRange.all &&
+                      state.firstDay != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      '自 ${fmtDayCn(parseDay(state.firstDay!))}起 · 共 ${daysBetween(parseDay(state.firstDay!), studyDayOf(DateTime.now())) + 1} 天',
+                      style: TextStyle(fontSize: 11, color: subColor(context)),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   _bars(state),
                 ],
               ),
             ),
             const SizedBox(height: 10),
-            if (state.range == SummaryRange.week ||
-                state.range == SummaryRange.month)
-              _reportCard(state),
-            if (state.range == SummaryRange.week ||
-                state.range == SummaryRange.month)
-              const SizedBox(height: 10),
             _heatmap(state),
             const SizedBox(height: 10),
             AppCard(
@@ -521,86 +523,6 @@ class _SummaryPageState extends State<SummaryPage> {
     );
   }
 
-  Widget _reportCard(AppState state) {
-    final isWeek = state.range == SummaryRange.week;
-    final cur = state.summaryTotal;
-    final prev = state.prevRangeTotal ?? 0;
-    final double? changePct = prev > 0 ? (cur - prev) / prev * 100 : null;
-    final up = cur >= prev;
-    final trendColor = up ? const Color(0xFF23B574) : AppColors.red;
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(isWeek ? '本周报告' : '本月报告',
-              style: TextStyle(fontSize: 12, color: subColor(context))),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _reportCell(
-                  isWeek ? '本周' : '本月',
-                  fmtShort(cur),
-                  textColor(context),
-                ),
-              ),
-              Container(width: 1, height: 34, color: lineColor(context)),
-              Expanded(
-                child: _reportCell(
-                  isWeek ? '上周' : '上月',
-                  fmtShort(prev),
-                  textColor(context),
-                ),
-              ),
-              Container(width: 1, height: 34, color: lineColor(context)),
-              Expanded(
-                child: _reportCell(
-                  '环比',
-                  changePct == null
-                      ? '—'
-                      : '${up ? '+' : ''}${changePct.toStringAsFixed(0)}%',
-                  prev == 0 && cur == 0 ? subColor(context) : trendColor,
-                ),
-              ),
-            ],
-          ),
-          if (state.bestDayKey != null) ...[
-            const SizedBox(height: 10),
-            Divider(height: 1, color: lineColor(context)),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Text('最佳学习日',
-                    style: TextStyle(fontSize: 12, color: subColor(context))),
-                const Spacer(),
-                Text(
-                  '${fmtDayCn(parseDay(state.bestDayKey!))} · ${fmtShort(state.bestDayMinutes)}',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textColor(context)),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _reportCell(String label, String value, Color valueColor) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: subColor(context))),
-        const SizedBox(height: 4),
-        Text(value,
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w700, color: valueColor)),
-      ],
-    );
-  }
-
   Widget _heatmap(AppState state) {
     final day = state.selectedDay;
     final year = day.year;
@@ -687,10 +609,10 @@ class _SummaryPageState extends State<SummaryPage> {
               const SizedBox(width: 4),
               for (final c in [
                 _heatColor(0),
-                _heatColor(120),
-                _heatColor(360),
-                _heatColor(720),
-                _heatColor(1440),
+                _heatColor(180),
+                _heatColor(420),
+                _heatColor(660),
+                _heatColor(900),
               ])
                 Container(
                   width: 12,
@@ -710,9 +632,9 @@ class _SummaryPageState extends State<SummaryPage> {
     if (minutes <= 0) {
       return isDark(context) ? const Color(0xFF23282E) : const Color(0xFFF5F1EF);
     }
-    // 0~24 小时线性从浅红到深红
-    final t = (minutes / 1440).clamp(0.0, 1.0);
-    return Color.lerp(const Color(0xFFFFE4E0), const Color(0xFFC0392B), t)!;
+    // 0~15 小时线性从白到深红
+    final t = (minutes / 900).clamp(0.0, 1.0);
+    return Color.lerp(const Color(0xFFFFF5F3), const Color(0xFFC0392B), t)!;
   }
 
   Widget _subjectList(AppState state, List<SubjectSummary> items) {
