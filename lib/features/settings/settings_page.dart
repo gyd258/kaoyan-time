@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/backup.dart';
 import '../../state/app_state.dart';
 import '../../theme.dart';
 import '../../utils/format.dart';
@@ -67,6 +69,19 @@ class SettingsPage extends StatelessWidget {
             ),
           ]),
           _group(context, '数据', [
+            _row(
+              context,
+              icon: '表',
+              title: '导出 CSV',
+              value: 'Excel 可开',
+              onTap: () => _exportCsv(context, state),
+            ),
+            _row(
+              context,
+              icon: '备',
+              title: '导出 JSON 备份',
+              onTap: () => _exportJson(context, state),
+            ),
             _row(
               context,
               icon: '入',
@@ -195,6 +210,40 @@ class SettingsPage extends StatelessWidget {
       helpText: '选择考试日期',
     );
     if (picked != null) await state.setExamDate(picked);
+  }
+
+  Future<void> _exportCsv(BuildContext context, AppState state) async {
+    try {
+      final csv = await state.exportCsv();
+      final bytes = Uint8List.fromList(utf8.encode('\uFEFF$csv'));
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: '保存 CSV',
+        fileName: 'yanshi_entries_${timestampName(DateTime.now())}.csv',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        bytes: bytes,
+      );
+      if (path != null && context.mounted) showToast(context, '已导出 CSV');
+    } catch (e) {
+      if (context.mounted) showToast(context, '导出失败：$e');
+    }
+  }
+
+  Future<void> _exportJson(BuildContext context, AppState state) async {
+    try {
+      final json = await state.exportJson();
+      final bytes = Uint8List.fromList(utf8.encode(json));
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: '保存备份',
+        fileName: 'yanshi_backup_${timestampName(DateTime.now())}.json',
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        bytes: bytes,
+      );
+      if (path != null && context.mounted) showToast(context, '已导出备份');
+    } catch (e) {
+      if (context.mounted) showToast(context, '导出失败：$e');
+    }
   }
 
   Future<void> _importJson(BuildContext context, AppState state) async {
