@@ -18,7 +18,7 @@ DateTime parseDay(String s) {
 
 String fmtDayCn(DateTime d) => '${d.month}月${d.day}日 ${_cnWeek[d.weekday - 1]}';
 
-String fmtMd(DateTime d) => '${d.month}/${d.day}';
+String fmtMd(DateTime d) => '${d.month}月${d.day}日';
 
 String fmtClock(DateTime t) =>
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -33,12 +33,12 @@ String fmtDuration(int minutes) {
 }
 
 String fmtShort(int minutes) {
-  if (minutes <= 0) return '0m';
+  if (minutes <= 0) return '0分';
   final h = minutes ~/ 60;
   final m = minutes % 60;
-  if (h == 0) return '${m}m';
-  if (m == 0) return '${h}h';
-  return '${h}h${m.toString().padLeft(2, '0')}m';
+  if (h == 0) return '$m分';
+  if (m == 0) return '$h时';
+  return '$h时$m分';
 }
 
 String fmtTimer(int ms) {

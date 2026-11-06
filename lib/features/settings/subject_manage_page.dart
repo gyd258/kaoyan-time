@@ -89,6 +89,15 @@ class SubjectManagePage extends StatelessWidget {
                   _editSubject(context, state, subject: s);
                 } else if (v == 'archive') {
                   await state.saveSubject(s.copyWith(archived: !s.archived));
+                } else if (v == 'delete') {
+                  final ok = await confirmAction(
+                    context,
+                    title: '删除科目「${s.name}」？',
+                    message: '该科目的所有学习记录和笔记也会一并删除，且无法恢复。',
+                    confirmText: '删除',
+                    danger: true,
+                  );
+                  if (ok) await state.deleteSubject(s);
                 }
               },
               itemBuilder: (_) => [
@@ -99,6 +108,9 @@ class SubjectManagePage extends StatelessWidget {
                   child: Text(s.archived ? '恢复' : '归档',
                       style: const TextStyle(fontSize: 13)),
                 ),
+                const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('删除', style: TextStyle(fontSize: 13, color: AppColors.red))),
               ],
             ),
           ],

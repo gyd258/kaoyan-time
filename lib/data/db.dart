@@ -138,6 +138,17 @@ class AppDatabase {
     );
   }
 
+  /// 删除科目及其任务、记录、笔记（级联）
+  Future<void> deleteSubject(int id) async {
+    final db = await instance;
+    await db.transaction((txn) async {
+      await txn.delete('tasks', where: 'subject_id = ?', whereArgs: [id]);
+      await txn.delete('time_entries', where: 'subject_id = ?', whereArgs: [id]);
+      await txn.delete('notes', where: 'subject_id = ?', whereArgs: [id]);
+      await txn.delete('subjects', where: 'id = ?', whereArgs: [id]);
+    });
+  }
+
   // ---------- 任务 ----------
 
   Future<List<TaskItem>> loadTasks() async {
@@ -264,6 +275,13 @@ class AppDatabase {
     return {
       for (final r in rows) r['day'] as String: ((r['m'] as int?) ?? 0),
     };
+  }
+
+  /// 最早一条记录的学习日，无记录返回 null
+  Future<String?> firstEntryDay() async {
+    final db = await instance;
+    final rows = await db.rawQuery('SELECT MIN(day) AS d FROM time_entries');
+    return rows.first['d'] as String?;
   }
 
   Future<int> countEntries({String? from, String? to}) async {

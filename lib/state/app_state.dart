@@ -36,6 +36,7 @@ class AppState extends ChangeNotifier {
   int summaryCount = 0;
   int summaryDays = 1;
   Map<String, int> last7 = {};
+  Map<String, int> monthHeatmap = {};
 
   int? noteFilterSubjectId;
   String noteQuery = '';
@@ -181,6 +182,11 @@ class AppState extends ChangeNotifier {
     await _reloadStructureAndData();
   }
 
+  Future<void> deleteSubject(Subject subject) async {
+    await db.deleteSubject(subject.id);
+    await _reloadStructureAndData();
+  }
+
   Future<void> addTask(int subjectId, String name) async {
     await db.insertTask(subjectId, name.trim());
     await _reloadStructureAndData();
@@ -209,7 +215,7 @@ class AppState extends ChangeNotifier {
   Future<void> refreshSummary() async {
     final today = dateOnly(selectedDay);
     final from = _rangeStart(today);
-    final to = dayKey(today);
+    final to = range == SummaryRange.all ? null : dayKey(today);
     final minutes = await db.minutesBySubject(from: from, to: to);
     if (totalMinutes.isEmpty && subjects.isNotEmpty) {
       totalMinutes = await db.minutesBySubject();
@@ -227,13 +233,19 @@ class AppState extends ChangeNotifier {
     ];
     summaryTotal = summary.fold(0, (a, b) => a + b.minutes);
     summaryCount = await db.countEntries(from: from, to: to);
-    summaryDays = _rangeDays(today, from);
+    summaryDays = await _rangeDays(today, from);
     final start7 = today.subtract(const Duration(days: 6));
-    final raw = await db.minutesByDay(from: dayKey(start7), to: to);
+    final end7 = dayKey(today);
+    final raw = await db.minutesByDay(from: dayKey(start7), to: end7);
     last7 = {
       for (var i = 0; i < 7; i++)
         dayKey(start7.add(Duration(days: i))): raw[dayKey(start7.add(Duration(days: i)))] ?? 0,
     };
+    // 月度热力图（selectedDay 所在月）
+    final mStart = monthStart(today);
+    final mEndDay = DateTime(today.year, today.month + 1, 0).day;
+    final mEnd = DateTime(today.year, today.month, mEndDay);
+    monthHeatmap = await db.minutesByDay(from: dayKey(mStart), to: dayKey(mEnd));
     notifyListeners();
   }
 
@@ -250,13 +262,13 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  int _rangeDays(DateTime today, String? from) {
+  Future<int> _rangeDays(DateTime today, String? from) async {
     if (range == SummaryRange.all) {
-      if (from == null) {
-        final entries = dayEntries;
-        if (entries.isEmpty) return 1;
-      }
-      return 1;
+      final first = await db.firstEntryDay();
+      if (first == null) return 1;
+      final realToday = dateOnly(DateTime.now());
+      final span = daysBetween(parseDay(first), realToday) + 1;
+      return span < 1 ? 1 : span;
     }
     if (from == null) return 1;
     final d = daysBetween(parseDay(from), today) + 1;

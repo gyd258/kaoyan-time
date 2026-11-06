@@ -34,187 +34,225 @@ class _SummaryPageState extends State<SummaryPage> {
 
     return SafeArea(
       bottom: false,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                Text('汇总',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: textColor(context))),
-                const Spacer(),
-                Text(_rangeLabel(state), style: TextStyle(fontSize: 12, color: subColor(context))),
-              ],
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: (details) {
+          if (state.range != SummaryRange.week &&
+              state.range != SummaryRange.month) {
+            return;
+          }
+          final delta = details.primaryVelocity ?? 0;
+          if (delta.abs() < 300) return;
+          final forward = delta < 0; // 向左滑 → 往后
+          _shiftRange(state, forward);
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Text('汇总',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: textColor(context))),
+                  const Spacer(),
+                  Text(_rangeLabel(state),
+                      style: TextStyle(fontSize: 12, color: subColor(context))),
+                ],
+              ),
             ),
-          ),
-          _segmented(state),
-          const SizedBox(height: 12),
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            _segmented(state),
+            const SizedBox(height: 12),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('总计时长',
+                              style: TextStyle(fontSize: 11, color: subColor(context))),
+                          const SizedBox(height: 3),
+                          Text(
+                            fmtDuration(state.summaryTotal),
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.5,
+                              color: textColor(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      if (state.range != SummaryRange.today)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('日均', style: TextStyle(fontSize: 11, color: subColor(context))),
+                            const SizedBox(height: 3),
+                            Text(
+                              fmtDuration((state.summaryTotal / state.summaryDays).round()),
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor(context)),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _bars(state),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            _heatmap(state),
+            const SizedBox(height: 10),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('科目占比', style: TextStyle(fontSize: 12, color: subColor(context))),
+                  const SizedBox(height: 10),
+                  if (state.summaryTotal == 0)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 26),
+                      child: Center(
+                        child: Text('暂无数据',
+                            style: TextStyle(fontSize: 12, color: subColor(context))),
+                      ),
+                    )
+                  else
+                    Row(
                       children: [
-                        Text('总计时长', style: TextStyle(fontSize: 11, color: subColor(context))),
-                        const SizedBox(height: 3),
-                        Text(
-                          fmtDuration(state.summaryTotal),
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
-                            color: textColor(context),
+                        SizedBox(
+                          width: 118,
+                          height: 118,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CustomPaint(
+                                size: const Size(118, 118),
+                                painter: _DonutPainter(
+                                  parts: [
+                                    for (final s in subjects) (s.minutes, Color(s.color)),
+                                  ],
+                                  background: isDark(context)
+                                      ? const Color(0xFF2A2F36)
+                                      : const Color(0xFFEFF4F0),
+                                ),
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('总计',
+                                      style: TextStyle(fontSize: 10, color: subColor(context))),
+                                  Text(
+                                    fmtShort(state.summaryTotal),
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: textColor(context)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              for (final s in subjects.take(5))
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: GestureDetector(
+                                    onTap: () => _showSubjectDetail(state, s),
+                                    child: Row(
+                                      children: [
+                                        Dot(Color(s.color), size: 7),
+                                        const SizedBox(width: 7),
+                                        Expanded(
+                                          child: Text(s.name,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 12, color: textColor(context))),
+                                        ),
+                                        Text(fmtShort(s.minutes),
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: textColor(context))),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    if (state.range != SummaryRange.today)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('日均', style: TextStyle(fontSize: 11, color: subColor(context))),
-                          const SizedBox(height: 3),
-                          Text(
-                            fmtDuration((state.summaryTotal / state.summaryDays).round()),
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: textColor(context)),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _bars(state),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('科目占比', style: TextStyle(fontSize: 12, color: subColor(context))),
-                const SizedBox(height: 10),
-                if (state.summaryTotal == 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 26),
-                    child: Center(
-                      child: Text('暂无数据', style: TextStyle(fontSize: 12, color: subColor(context))),
-                    ),
-                  )
-                else
-                  Row(
+            const SizedBox(height: 16),
+            if (active.isNotEmpty) ...[
+              SectionLabel('按科目'),
+              _subjectList(state, active),
+            ],
+            if (archived.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => setState(() => _showArchived = !_showArchived),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+                  child: Row(
                     children: [
-                      SizedBox(
-                        width: 118,
-                        height: 118,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            CustomPaint(
-                              size: const Size(118, 118),
-                              painter: _DonutPainter(
-                                parts: [
-                                  for (final s in subjects) (s.minutes, Color(s.color)),
-                                ],
-                                background:
-                                    isDark(context) ? const Color(0xFF2A2F36) : const Color(0xFFEFF4F0),
-                              ),
-                            ),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('总计',
-                                    style: TextStyle(fontSize: 10, color: subColor(context))),
-                                Text(
-                                  fmtShort(state.summaryTotal),
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: textColor(context)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            for (final s in subjects.take(5))
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: GestureDetector(
-                                  onTap: () => _showSubjectDetail(state, s),
-                                  child: Row(
-                                    children: [
-                                      Dot(Color(s.color), size: 7),
-                                      const SizedBox(width: 7),
-                                      Expanded(
-                                        child: Text(s.name,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 12, color: textColor(context))),
-                                      ),
-                                      Text(fmtShort(s.minutes),
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: textColor(context))),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
+                      Text('已归档（${archived.length}）',
+                          style: TextStyle(fontSize: 12, color: subColor(context))),
+                      Icon(
+                        _showArchived ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: subColor(context),
                       ),
                     ],
                   ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (active.isNotEmpty) ...[
-            SectionLabel('按科目'),
-            _subjectList(state, active),
-          ],
-          if (archived.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: () => setState(() => _showArchived = !_showArchived),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-                child: Row(
-                  children: [
-                    Text('已归档（${archived.length}）',
-                        style: TextStyle(fontSize: 12, color: subColor(context))),
-                    Icon(
-                      _showArchived ? Icons.expand_less : Icons.expand_more,
-                      size: 18,
-                      color: subColor(context),
-                    ),
-                  ],
                 ),
               ),
-            ),
-            if (_showArchived) _subjectList(state, archived),
+              if (_showArchived) _subjectList(state, archived),
+            ],
           ],
-        ],
+        ),
       ),
     );
+  }
+
+  void _shiftRange(AppState state, bool forward) {
+    final cur = state.selectedDay;
+    DateTime next;
+    if (state.range == SummaryRange.week) {
+      next = cur.add(Duration(days: forward ? 7 : -7));
+    } else {
+      // month
+      if (forward) {
+        next = DateTime(cur.year, cur.month + 1, cur.day);
+      } else {
+        next = DateTime(cur.year, cur.month - 1, cur.day);
+      }
+    }
+    // 不超过今天
+    final today = studyDayOf(DateTime.now());
+    if (next.isAfter(today)) next = today;
+    state.selectDay(next);
   }
 
   String _rangeLabel(AppState state) {
@@ -475,6 +513,117 @@ class _SummaryPageState extends State<SummaryPage> {
                 fontSize: 13, fontWeight: FontWeight.w600, color: textColor(ctx))),
       ],
     );
+  }
+
+  Widget _heatmap(AppState state) {
+    final day = state.selectedDay;
+    final year = day.year;
+    final month = day.month;
+    final firstDay = DateTime(year, month, 1);
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final leading = firstDay.weekday - 1; // 周一起
+    final cells = <Widget>[];
+    // 星期表头
+    const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
+    for (final w in weekLabels) {
+      cells.add(Center(
+        child: Text(w, style: TextStyle(fontSize: 10, color: subColor(context))),
+      ));
+    }
+    // 前置空白
+    for (var i = 0; i < leading; i++) {
+      cells.add(const SizedBox());
+    }
+    final todayKey = dayKey(studyDayOf(DateTime.now()));
+    for (var d = 1; d <= daysInMonth; d++) {
+      final date = DateTime(year, month, d);
+      final key = dayKey(date);
+      final minutes = state.monthHeatmap[key] ?? 0;
+      final isToday = key == todayKey;
+      cells.add(GestureDetector(
+        onTap: () => _showDayDetail(state, key),
+        child: Container(
+          margin: const EdgeInsets.all(1.5),
+          decoration: BoxDecoration(
+            color: _heatColor(minutes),
+            borderRadius: BorderRadius.circular(5),
+            border: isToday
+                ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5)
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$d',
+            style: TextStyle(
+              fontSize: 10,
+              color: minutes > 0 ? Colors.white.withValues(alpha: 0.9) : subColor(context),
+              fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
+            ),
+          ),
+        ),
+      ));
+    }
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('$year年$month月',
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: textColor(context))),
+              const Spacer(),
+              Text('左右滑动切换月份',
+                  style: TextStyle(fontSize: 10, color: subColor(context))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          GridView.count(
+            crossAxisCount: 7,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 2,
+            crossAxisSpacing: 2,
+            childAspectRatio: 1,
+            children: cells,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('少', style: TextStyle(fontSize: 9, color: subColor(context))),
+              const SizedBox(width: 4),
+              for (final c in [
+                _heatColor(0),
+                _heatColor(15),
+                _heatColor(45),
+                _heatColor(90),
+                _heatColor(150),
+              ])
+                Container(
+                  width: 12,
+                  height: 12,
+                  margin: const EdgeInsets.only(right: 3),
+                  decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3)),
+                ),
+              Text('多', style: TextStyle(fontSize: 9, color: subColor(context))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _heatColor(int minutes) {
+    if (minutes <= 0) {
+      return isDark(context) ? const Color(0xFF23282E) : const Color(0xFFEEF3F0);
+    }
+    final base = isDark(context);
+    if (minutes <= 30) return base ? const Color(0xFF1E4D3A) : const Color(0xFFBFE6D2);
+    if (minutes <= 60) return base ? const Color(0xFF237050) : const Color(0xFF7FD3A8);
+    if (minutes <= 120) return base ? const Color(0xFF2B9968) : const Color(0xFF3FB97E);
+    return base ? const Color(0xFF34C982) : const Color(0xFF23B574);
   }
 
   Widget _subjectList(AppState state, List<SubjectSummary> items) {
