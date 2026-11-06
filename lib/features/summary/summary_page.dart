@@ -340,7 +340,7 @@ class _SummaryPageState extends State<SummaryPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        e.value == 0 ? '' : '${e.value}',
+                        e.value == 0 ? '' : (e.value / 60).toStringAsFixed(1),
                         style: TextStyle(fontSize: 8, color: subColor(context)),
                       ),
                       const SizedBox(height: 3),
@@ -553,16 +553,18 @@ class _SummaryPageState extends State<SummaryPage> {
           ),
           alignment: Alignment.center,
           child: Text(
-            minutes > 0 ? '$minutes' : '',
+            minutes > 0 ? (minutes / 60).toStringAsFixed(1) : '',
             style: TextStyle(
               fontSize: 8,
-              color: minutes > 0 ? Colors.white : subColor(context),
+              color: minutes >= 180 ? Colors.white : const Color(0xFFB0392E),
               fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
             ),
           ),
         ),
       ));
     }
+
+    final monthTotal = state.monthHeatmap.values.fold<int>(0, (a, b) => a + b);
 
     return AppCard(
       child: Column(
@@ -573,8 +575,11 @@ class _SummaryPageState extends State<SummaryPage> {
               Text('$year年$month月',
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: textColor(context))),
+              const SizedBox(width: 8),
+              Text('本月共 ${fmtShort(monthTotal)}',
+                  style: TextStyle(fontSize: 12, color: subColor(context))),
               const Spacer(),
-              Text('左右滑动切换月份',
+              Text('单位：小时',
                   style: TextStyle(fontSize: 10, color: subColor(context))),
             ],
           ),
@@ -596,10 +601,10 @@ class _SummaryPageState extends State<SummaryPage> {
               const SizedBox(width: 4),
               for (final c in [
                 _heatColor(0),
-                _heatColor(15),
-                _heatColor(45),
-                _heatColor(90),
-                _heatColor(150),
+                _heatColor(120),
+                _heatColor(360),
+                _heatColor(720),
+                _heatColor(1440),
               ])
                 Container(
                   width: 12,
@@ -617,13 +622,11 @@ class _SummaryPageState extends State<SummaryPage> {
 
   Color _heatColor(int minutes) {
     if (minutes <= 0) {
-      return isDark(context) ? const Color(0xFF23282E) : const Color(0xFFEEF3F0);
+      return isDark(context) ? const Color(0xFF23282E) : const Color(0xFFF5F1EF);
     }
-    final base = isDark(context);
-    if (minutes <= 30) return base ? const Color(0xFF1E4D3A) : const Color(0xFFBFE6D2);
-    if (minutes <= 60) return base ? const Color(0xFF237050) : const Color(0xFF7FD3A8);
-    if (minutes <= 120) return base ? const Color(0xFF2B9968) : const Color(0xFF3FB97E);
-    return base ? const Color(0xFF34C982) : const Color(0xFF23B574);
+    // 0~24 小时线性从浅红到深红
+    final t = (minutes / 1440).clamp(0.0, 1.0);
+    return Color.lerp(const Color(0xFFFFE4E0), const Color(0xFFC0392B), t)!;
   }
 
   Widget _subjectList(AppState state, List<SubjectSummary> items) {
