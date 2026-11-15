@@ -90,6 +90,7 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
     final state = context.watch<AppState>();
     final today = studyDayOf(DateTime.now());
     final subjects = state.activeSubjects;
+    final todays = subjects.where((s) => (state.todayMinutes[s.id] ?? 0) > 0).toList();
 
     return SafeArea(
       bottom: false,
@@ -112,8 +113,16 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
                     ),
                   ),
                 )
+              else if (todays.isEmpty)
+                AppCard(
+                  child: EmptyState(
+                    text: '今天还没有学习记录',
+                    actionText: '开始记录',
+                    onAction: () => showEntrySheet(context),
+                  ),
+                )
               else
-                for (final s in subjects)
+                for (final s in todays)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 9),
                     child: _subjectCard(state, s),
