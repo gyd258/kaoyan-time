@@ -38,6 +38,9 @@ class AppState extends ChangeNotifier {
   Map<String, int> last7 = {};
   Map<String, int> monthHeatmap = {};
   String? firstDay; // 最早一条记录的学习日
+  int dailyTargetMinutes = 0; // 当前热力图月份的每日目标（0=未设置）
+  int heatmapMetDays = 0; // 当前热力图月份达标天数
+  int heatmapTotalDays = 0; // 当前热力图月份已过天数
 
   int? noteFilterSubjectId;
   String noteQuery = '';
@@ -248,6 +251,25 @@ class AppState extends ChangeNotifier {
     final mEnd = DateTime(today.year, today.month, mEndDay);
     monthHeatmap = await db.minutesByDay(from: dayKey(mStart), to: dayKey(mEnd));
     firstDay = await db.firstEntryDay();
+    // 每月每日目标 + 达标统计
+    final targetKey = 'daily_target_${today.year}${today.month.toString().padLeft(2, '0')}';
+    final stored = await db.getSetting(targetKey);
+    dailyTargetMinutes = int.tryParse(stored ?? '') ?? 0;
+    final todayReal = studyDayOf(DateTime.now());
+    final isCurrentMonth = today.year == todayReal.year && today.month == todayReal.month;
+    heatmapTotalDays = isCurrentMonth
+        ? todayReal.day
+        : mEndDay;
+    if (dailyTargetMinutes > 0) {
+      var met = 0;
+      for (var d = 1; d <= heatmapTotalDays; d++) {
+        final k = dayKey(DateTime(today.year, today.month, d));
+        if ((monthHeatmap[k] ?? 0) >= dailyTargetMinutes) met++;
+      }
+      heatmapMetDays = met;
+    } else {
+      heatmapMetDays = 0;
+    }
     notifyListeners();
   }
 
@@ -321,6 +343,16 @@ class AppState extends ChangeNotifier {
       examDate = v;
     }
     notifyListeners();
+  }
+
+  Future<void> setDailyTarget(int year, int month, int minutes) async {
+    final key = 'daily_target_$year${month.toString().padLeft(2, '0')}';
+    if (minutes <= 0) {
+      await db.setSetting(key, '');
+    } else {
+      await db.setSetting(key, minutes.toString());
+    }
+    await refreshSummary();
   }
 
   // ---------------- 计时器 ----------------

@@ -523,6 +523,75 @@ class _SummaryPageState extends State<SummaryPage> {
     );
   }
 
+  Future<void> _editDailyTarget(AppState state, int year, int month) async {
+    final controller = TextEditingController(
+      text: state.dailyTargetMinutes > 0 ? state.dailyTargetMinutes.toString() : '',
+    );
+    final presetMin = state.dailyTargetMinutes;
+    int? result;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$year年$month月 每日目标'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '目标分钟数',
+                hintText: '例如 180',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [60, 120, 180, 240, 300, 360]
+                  .map((m) => ActionChip(
+                        label: Text('${m ~/ 60}h'),
+                        onPressed: () => controller.text = m.toString(),
+                      ))
+                  .toList(),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              result = null;
+              Navigator.pop(ctx);
+            },
+            child: const Text('取消'),
+          ),
+          if (presetMin > 0)
+            TextButton(
+              onPressed: () {
+                result = 0;
+                Navigator.pop(ctx);
+              },
+              child: const Text('清除'),
+            ),
+          FilledButton(
+            onPressed: () {
+              final v = int.tryParse(controller.text.trim());
+              if (v != null && v >= 0) {
+                result = v;
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      await state.setDailyTarget(year, month, result!);
+    }
+  }
+
   Widget _heatmap(AppState state) {
     final day = state.selectedDay;
     final year = day.year;
@@ -548,6 +617,12 @@ class _SummaryPageState extends State<SummaryPage> {
       final key = dayKey(date);
       final minutes = state.monthHeatmap[key] ?? 0;
       final isToday = key == todayKey;
+      final isMet = state.dailyTargetMinutes > 0 && minutes >= state.dailyTargetMinutes;
+      final border = isMet
+          ? Border.all(color: const Color(0xFF23B574), width: 1.8)
+          : isToday
+              ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5)
+              : null;
       cells.add(GestureDetector(
         onTap: () => _showDayDetail(state, key),
         child: Container(
@@ -555,9 +630,7 @@ class _SummaryPageState extends State<SummaryPage> {
           decoration: BoxDecoration(
             color: _heatColor(minutes),
             borderRadius: BorderRadius.circular(5),
-            border: isToday
-                ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5)
-                : null,
+            border: border,
           ),
           alignment: Alignment.center,
           child: Text(
@@ -565,7 +638,7 @@ class _SummaryPageState extends State<SummaryPage> {
             style: TextStyle(
               fontSize: 8,
               color: minutes >= 180 ? Colors.white : const Color(0xFFB0392E),
-              fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
+              fontWeight: isMet || isToday ? FontWeight.w700 : FontWeight.normal,
             ),
           ),
         ),
@@ -587,10 +660,48 @@ class _SummaryPageState extends State<SummaryPage> {
               Text('本月共 ${fmtShort(monthTotal)}',
                   style: TextStyle(fontSize: 12, color: subColor(context))),
               const Spacer(),
-              Text('单位：小时',
-                  style: TextStyle(fontSize: 10, color: subColor(context))),
+              IconButton(
+                iconSize: 18,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () => _editDailyTarget(state, year, month),
+                icon: Icon(
+                  state.dailyTargetMinutes > 0
+                      ? Icons.tips_and_updates
+                      : Icons.add_task,
+                  color: state.dailyTargetMinutes > 0
+                      ? const Color(0xFF23B574)
+                      : subColor(context),
+                ),
+              ),
             ],
           ),
+          if (state.dailyTargetMinutes > 0) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Text(
+                  '每日目标 ${fmtDuration(state.dailyTargetMinutes)}',
+                  style: TextStyle(fontSize: 11, color: subColor(context)),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF23B574).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '达标 ${state.heatmapMetDays} / ${state.heatmapTotalDays} 天',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF1A7D50),
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 10),
           GridView.count(
             crossAxisCount: 7,
